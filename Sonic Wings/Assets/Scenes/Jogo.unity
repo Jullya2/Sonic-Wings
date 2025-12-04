@@ -359,7 +359,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &219356043
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1277,12 +1277,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb35b60671f88984694d0f34ed1e6325, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  score: 0
-  playerLives: 3
-  scoreText: {fileID: 1149730536}
-  gameOverPanel: {fileID: 219356042}
-  victoryPanel: {fileID: 455370659}
-  scoreToWin: 1000
+  currentScore: 0
+  victoryScreenUI: {fileID: 455370659}
+  gameOverScreenUI: {fileID: 219356042}
 --- !u!4 &712327985
 Transform:
   m_ObjectHideFlags: 0
@@ -1740,7 +1737,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1082451872
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2270,6 +2267,8 @@ MonoBehaviour:
   maxSize: 1.4
   minSpeed: 3
   maxSpeed: 7
+  bossPrefab: {fileID: 124750888556658351, guid: 19e04a640c754e145aa8331b23d33796, type: 3}
+  bossTime: 10
 --- !u!4 &1244841531
 Transform:
   m_ObjectHideFlags: 0

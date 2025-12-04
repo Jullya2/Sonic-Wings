@@ -1,99 +1,68 @@
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.SceneManagement;
-using TMPro;
+// using TMPro; // Descomente se estiver usando TextMeshPro
+// using UnityEngine.UI; // Descomente se estiver usando Text padrão
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager Instance;
-    public int score;
-    public int playerLives = 3;
-    public TextMeshProUGUI scoreText;
-    public GameObject gameOverPanel;
-    public GameObject victoryPanel;
-    public int scoreToWin = 1000;
+    // CORREÇÃO: Variável Singleton 'Instance'
+    public static GameManager Instance { get; private set; }
 
-    bool gameEnded = false;
-    GameObject player;
+    // VARIÁVEIS DE CONTROLE E UI (Configure no Inspector)
+    public int currentScore = 0;
+    // public TextMeshProUGUI scoreText; 
 
-    void Awake()
+    public GameObject victoryScreenUI;
+    public GameObject gameOverScreenUI;
+
+
+    private void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        Time.timeScale = 1f;
+
+        if (victoryScreenUI != null) victoryScreenUI.SetActive(false);
+        if (gameOverScreenUI != null) gameOverScreenUI.SetActive(false);
     }
 
-    void Start()
+    public void AddScore(int points)
     {
-        player = GameObject.FindWithTag("Player");
-        UpdateUI();
-
-        if (gameOverPanel != null) gameOverPanel.SetActive(false);
-        if (victoryPanel != null) victoryPanel.SetActive(false);
+        currentScore += points;
+        Debug.Log("Pontuação Atual: " + currentScore);
+        // Lógica de UI para o placar aqui
     }
 
-    public void AddScore(int p)
+    public void LevelComplete()
     {
-        if (gameEnded) return;
+        Debug.Log(">>> LevelComplete INICIADO: Pausando o jogo e ativando UI.");
+        Time.timeScale = 0f;
 
-        score += p;
-        UpdateUI();
-
-        if (score >= scoreToWin) Victory();
-    }
-
-    void UpdateUI()
-    {
-        if (scoreText != null) scoreText.text = "Score: " + score;
-    }
-
-    public void PlayerHit()
-    {
-        if (gameEnded) return;
-
-        playerLives--;
-        if (playerLives <= 0) GameOver();
+        if (victoryScreenUI != null)
+        {
+            victoryScreenUI.SetActive(true);
+        }
+        else
+        {
+            Debug.LogError("ERRO: Painel Victory Screen UI não está conectado no Inspector do GameManager!");
+        }
     }
 
     public void GameOver()
     {
-        if (gameEnded) return;
-        gameEnded = true;
-
-        if (SongManager.Instance != null)
-            SongManager.Instance.FadeOutAndStop(1.2f);
-
-        if (player != null)
-            Destroy(player);
-
+        Debug.Log("JOGADOR DESTRUIDO! Fim de Jogo.");
         Time.timeScale = 0f;
-        if (gameOverPanel != null) gameOverPanel.SetActive(true);
-    }
 
-    public void Victory()
-    {
-        if (gameEnded) return;
-        gameEnded = true;
-
-        if (SongManager.Instance != null)
-            SongManager.Instance.FadeOutAndStop(1.2f);
-
-        if (player != null)
-            Destroy(player);
-
-        Time.timeScale = 0f;
-        if (victoryPanel != null) victoryPanel.SetActive(true);
-    }
-    public void Restart()
-    {
-        Time.timeScale = 1f;
-        if (SongManager.Instance != null) SongManager.Instance.RestoreAndPlay();
-        SceneManager.LoadScene("Main");
-    }
-
-    public void BackToMenu()
-    {
-        Time.timeScale = 1f;
-        if (SongManager.Instance != null) SongManager.Instance.RestoreAndPlay();
-        SceneManager.LoadScene("MainMenu");
+        if (gameOverScreenUI != null)
+        {
+            gameOverScreenUI.SetActive(true);
+        }
+        else
+        {
+            Debug.LogError("ERRO: Painel Game Over UI não está conectado no Inspector do GameManager!");
+        }
     }
 }

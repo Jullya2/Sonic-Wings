@@ -19,6 +19,11 @@ public class PlayerHealth : MonoBehaviour
 
     public void TakeDamage(int amount)
     {
+        // CORREÇÃO PARA TESTE DE DANO:
+        // Se essa linha aparecer no console, o problema é puramente visual (o Slider)
+        // Se NÃO aparecer, o problema é na Tag/Collider do jogador/inimigo.
+        Debug.Log("JOGADOR RECEBEU DANO! Reduzindo a vida em: " + amount + ".");
+
         currentHealth -= amount;
         if (currentHealth < 0) currentHealth = 0;
 
@@ -31,6 +36,7 @@ public class PlayerHealth : MonoBehaviour
 
         if (healthSlider != null)
         {
+            // Atualiza o valor do Slider para refletir a vida atual.
             healthSlider.value = (float)currentHealth / maxHealth;
         }
 

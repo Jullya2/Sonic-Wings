@@ -23,10 +23,12 @@ public class Bullet : MonoBehaviour
 
             if (a != null)
             {
+                // A bala causa a morte e pontuação
                 GameManager.Instance.AddScore(10);
-                a.Die();
+                a.Die(); // Chamada direta resolvida com 'public void Die()'
             }
 
+            // A bala sempre se destrói
             Destroy(gameObject);
         }
     }

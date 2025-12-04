@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class Asteroid : MonoBehaviour
 {
+    // Variáveis de Movimento em Onda (Seno)
+    public float amplitude = 2f;
+    public float frequency = 1f;
     public float speedMin = 4f;
     public float speedMax = 7f;
     public float lifeTime = 10f;
@@ -12,6 +15,10 @@ public class Asteroid : MonoBehaviour
     Rigidbody2D rb;
     int hp = 1;
     bool hasInit = false;
+
+    // Variáveis para o movimento em onda
+    private float initialX;
+    private float timeOffset;
 
     void Awake()
     {
@@ -24,6 +31,8 @@ public class Asteroid : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+
+        rb.freezeRotation = true;
     }
 
     void Start()
@@ -35,7 +44,21 @@ public class Asteroid : MonoBehaviour
             Vector2 fallback = Vector2.down;
             float s = Random.Range(speedMin, speedMax);
             rb.linearVelocity = fallback * s;
+
+            initialX = transform.position.x;
+            timeOffset = Random.Range(0f, 10f);
         }
+    }
+
+    void Update()
+    {
+        ApplySineMovement();
+    }
+
+    void ApplySineMovement()
+    {
+        float newX = initialX + amplitude * Mathf.Sin(frequency * (Time.time + timeOffset));
+        rb.position = new Vector2(newX, rb.position.y);
     }
 
     public void Initialize(Vector2 direction, float size = 1f, float speedOverride = -1f)
@@ -46,10 +69,12 @@ public class Asteroid : MonoBehaviour
 
         float s = speedOverride > 0 ? speedOverride : Random.Range(speedMin, speedMax);
 
+        initialX = transform.position.x;
+        timeOffset = Random.Range(0f, 10f);
+
         if (rb != null)
         {
             rb.linearVelocity = direction.normalized * s;
-            rb.angularVelocity = Random.Range(-180f, 180f);
         }
     }
 
@@ -60,22 +85,16 @@ public class Asteroid : MonoBehaviour
             PlayerHealth ph = other.GetComponent<PlayerHealth>();
             if (ph != null) ph.TakeDamage(1);
 
+            // Chamada interna corrigida
             Die();
         }
 
-        if (other.CompareTag("Bullet"))
-        {
-            hp--;
-            Destroy(other.gameObject);
-
-            if (hp <= 0)
-            {
-                GameManager.Instance?.AddScore(10);
-                Die();
-            }
-        }
+        // REMOVIDO: A lógica de dano por Bullet aqui, pois a Bullet agora lida com o inimigo.
+        // Se você quiser que o Asteroid.cs lide com o dano da Bullet, você deve reverter a mudança no Bullet.cs
+        // e deixar este bloco, mas garantir que a bala não chame Die()
     }
 
+    // CORREÇÃO CRÍTICA: A função deve ser pública e estar aqui dentro da classe!
     public void Die()
     {
         if (explodeSound != null)
