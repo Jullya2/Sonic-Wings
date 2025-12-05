@@ -1,68 +1,110 @@
 using UnityEngine;
-// using TMPro; // Descomente se estiver usando TextMeshPro
-// using UnityEngine.UI; // Descomente se estiver usando Text padr�o
+using UnityEngine.UI; 
+using UnityEngine.SceneManagement; 
+using TMPro; // Necessário para o placar de TextMeshPro
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviour // Mude para GameController se for o nome final
 {
-    // CORRE��O: Vari�vel Singleton 'Instance'
+    // Variável Singleton 'Instance'
+    // Se você renomeou a classe para GameController, use 'public static GameController Instance'
     public static GameManager Instance { get; private set; }
 
-    // VARI�VEIS DE CONTROLE E UI (Configure no Inspector)
+    // VARIÁVEIS DE CONTROLE E UI (Configure no Inspector)
     public int currentScore = 0;
-    // public TextMeshProUGUI scoreText; 
+    public TextMeshProUGUI scoreText; 
+    
+    // Variáveis de Controle de Cena
+    public string nextLevelSceneName = "Vitoria"; // Conforme sua imagem
+    public string currentSceneName; 
 
+    // Variáveis de UI (CRÍTICO: Conecte no Inspector)
     public GameObject victoryScreenUI;
     public GameObject gameOverScreenUI;
 
 
     private void Awake()
     {
+        // Lógica do Singleton
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
         Instance = this;
+        
+        // Garante que o jogo COMEÇA rodando
         Time.timeScale = 1f;
 
+        // Inicializa o nome da cena atual
+        currentSceneName = SceneManager.GetActiveScene().name; 
+        
+        // Inicializa o placar
+        if (scoreText != null)
+        {
+            scoreText.text = "SCORE: " + currentScore.ToString();
+        }
+
+        // Desativa UI
         if (victoryScreenUI != null) victoryScreenUI.SetActive(false);
         if (gameOverScreenUI != null) gameOverScreenUI.SetActive(false);
     }
 
+    // =================================================================
+    // PONTUAÇÃO E ESTADO DO JOGO
+    // =================================================================
+    
     public void AddScore(int points)
     {
         currentScore += points;
-        Debug.Log("Pontua��o Atual: " + currentScore);
-        // L�gica de UI para o placar aqui
+        
+        if (scoreText != null)
+        {
+            scoreText.text = "SCORE: " + currentScore.ToString();
+        }
     }
 
     public void LevelComplete()
     {
-        Debug.Log(">>> LevelComplete INICIADO: Pausando o jogo e ativando UI.");
-        Time.timeScale = 0f;
-
+        Time.timeScale = 0f; // Pausa
+        
         if (victoryScreenUI != null)
         {
             victoryScreenUI.SetActive(true);
-        }
-        else
-        {
-            Debug.LogError("ERRO: Painel Victory Screen UI n�o est� conectado no Inspector do GameManager!");
         }
     }
 
     public void GameOver()
     {
-        Debug.Log("JOGADOR DESTRUIDO! Fim de Jogo.");
-        Time.timeScale = 0f;
-
+        Time.timeScale = 0f; // Pausa
+        
         if (gameOverScreenUI != null)
         {
             gameOverScreenUI.SetActive(true);
         }
-        else
-        {
-            Debug.LogError("ERRO: Painel Game Over UI n�o est� conectado no Inspector do GameManager!");
-        }
+    }
+
+    // =================================================================
+    // FUNÇÕES DE BOTÃO (SOLUÇÃO PARA O PROBLEMA DO TEMPO)
+    // =================================================================
+    
+    // Conecte esta função ao botão "Recomeçar"
+    public void RestartLevel()
+    {
+        // CRÍTICO: Desbloqueia o tempo para permitir o carregamento da cena
+        Time.timeScale = 1f; 
+        
+        // OPCIONAL: Desativa o painel para garantir que não haja bloqueio
+        if (gameOverScreenUI != null) gameOverScreenUI.SetActive(false);
+        
+        SceneManager.LoadScene(currentSceneName);
+    }
+
+    // Conecte esta função ao botão "Voltar ao Menu"
+    public void LoadMenu(string menuSceneName = "MainMenu") 
+    {
+        // CRÍTICO: Desbloqueia o tempo para permitir o carregamento da cena
+        Time.timeScale = 1f; 
+        
+        SceneManager.LoadScene(menuSceneName);
     }
 }

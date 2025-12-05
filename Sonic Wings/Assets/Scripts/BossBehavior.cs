@@ -1,65 +1,189 @@
 using UnityEngine;
+using UnityEngine.UI;
+using System.Collections; // <<< NOVIDADE: NecessÃ¡rio para usar a Coroutine (IEnumerator)
 
 public class BossBehavior : MonoBehaviour
 {
-    // Enum e Variáveis (Você deve adaptá-las conforme sua necessidade)
-    public enum BossState { IntroMove, PatternA, PatternB }
-
+    // =================================================================
+    // ENUM E VARIÃVEIS PÃšBLICAS
+    // =================================================================
+    public enum BossState { IntroMove, LateralMove, PatternB }
+    
+    // ConfiguraÃ§Ãµes de Movimento
     public float movementSpeed = 3f;
+    public Vector3 targetScreenPosition = new Vector3(0, 4, 0); 
+    public float lateralSpeed = 2f; 
+    public float lateralDistance = 3f; 
+    
+    // ConfiguraÃ§Ãµes de Tiro e Dano
+    public GameObject bossBulletPrefab;
     public float shootInterval = 1.0f;
-    public float patternDuration = 5f;
-
     public int maxHealth = 100;
+
+    // REFERÃŠNCIA DA UI
+    public Slider healthBar; 
+    
+    // VARIÃVEIS DE TREMOR (SHAKE)
+    public float shakeDuration = 0.1f; // DuraÃ§Ã£o total do tremor
+    public float shakeMagnitude = 0.1f; // Intensidade do movimento
+    
+    // =================================================================
+    // VARIÃVEIS PRIVADAS
+    // =================================================================
     private int currentHealth;
+    private float shootTimer; 
+    private BossState currentState; 
+    private Vector3 startPosition; 
+    private int direction = 1; 
 
-    private float shootTimer;
-    private float patternTimer;
-    private BossState currentState;
-    private Vector3 targetScreenPosition = new Vector3(0, 4, 0); // Posição de combate
-
+    
     void Start()
     {
         currentHealth = maxHealth;
-        currentState = BossState.IntroMove;
-        patternTimer = patternDuration;
-        shootTimer = shootInterval;
-        // Garanta que o Boss tenha a Tag "Enemy" no Inspector para receber dano!
+        currentState = BossState.IntroMove; 
+        shootTimer = shootInterval; 
+        startPosition = targetScreenPosition; 
+        
+        // Inicializa a barra de vida
+        if (healthBar != null)
+        {
+            healthBar.maxValue = maxHealth;
+            healthBar.value = currentHealth;
+            healthBar.gameObject.SetActive(false); 
+        }
     }
 
     void Update()
     {
-        HandleMovement();
-        HandleShooting();
-        // Adicione lógica de troca de padrão aqui, se necessário
+        HandleMovement(); 
+        HandleShooting(); 
     }
+    
+    // =================================================================
+    // LÃ“GICA DE MOVIMENTO
+    // =================================================================
+
+    void HandleMovement()
+    {
+        if (currentState == BossState.IntroMove)
+        {
+            transform.position = Vector3.MoveTowards(
+                transform.position, 
+                targetScreenPosition, 
+                movementSpeed * Time.deltaTime
+            );
+
+            if (transform.position == targetScreenPosition)
+            {
+                currentState = BossState.LateralMove; 
+                
+                if (healthBar != null)
+                {
+                    healthBar.gameObject.SetActive(true);
+                }
+            }
+        }
+        
+        else if (currentState == BossState.LateralMove)
+        {
+            Vector3 target = startPosition + new Vector3(lateralDistance * direction, 0, 0);
+
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                target,
+                lateralSpeed * Time.deltaTime
+            );
+
+            if (Vector3.Distance(transform.position, target) < 0.01f)
+            {
+                direction *= -1; 
+            }
+        }
+    }
+    
+    // =================================================================
+    // LÃ“GICA DE TIRO E DANO
+    // =================================================================
 
     public void TakeDamage(int damage)
     {
         currentHealth -= damage;
+        Debug.Log("Boss atingido! Vida restante: " + currentHealth);
+        
+        // NOVIDADE: Inicia a rotina de tremor quando leva dano
+        StartCoroutine(Shake());
+        
+        if (healthBar != null)
+        {
+            healthBar.value = currentHealth;
+        }
+
         if (currentHealth <= 0)
         {
             Die();
         }
     }
+    
+    // COROUTINE PARA O EFEITO DE TREMOR
+    IEnumerator Shake()
+    {
+        Vector3 originalPos = transform.position;
+        float elapsed = 0f;
+
+        while (elapsed < shakeDuration)
+        {
+            // Gera um deslocamento aleatÃ³rio
+            float x = Random.Range(-1f, 1f) * shakeMagnitude;
+            float y = Random.Range(-1f, 1f) * shakeMagnitude;
+
+            // Move o Boss para a posiÃ§Ã£o tremida
+            transform.position = originalPos + new Vector3(x, y, 0f);
+
+            elapsed += Time.deltaTime;
+            yield return null; // Espera o prÃ³ximo frame
+        }
+
+        // Garante que o Boss volte Ã  posiÃ§Ã£o original no final do tremor
+        transform.position = originalPos;
+    }
 
     void Die()
     {
-        Debug.Log("Chefe Destruído! Chamando Fim de Fase.");
+        Debug.Log("Chefe DestruÃ­do! Chamando Fim de Fase.");
+        
+        if (healthBar != null)
+        {
+            healthBar.gameObject.SetActive(false);
+        }
 
         if (GameManager.Instance != null)
         {
             GameManager.Instance.LevelComplete();
+        } else {
+            Debug.LogError("GameManager.Instance Ã© nulo.");
         }
-        else
-        {
-            Debug.LogError("ERRO CRÍTICO: GameManager.Instance é nulo. A tela de vitória não pode ser ativada.");
-        }
-
         Destroy(gameObject);
     }
-
-    // Funções de Comportamento (Devem existir no seu script)
-    void HandleMovement() { /* Implementação de MoveTowards aqui */ }
-    void HandleShooting() { /* Implementação do timer de tiro aqui */ }
-    // ... (outras funções de Pattern)
+    
+    void HandleShooting()
+    {
+        if (currentState == BossState.LateralMove || currentState == BossState.PatternB) 
+        {
+            shootTimer -= Time.deltaTime;
+            
+            if (shootTimer <= 0)
+            {
+                ShootPatternA(); 
+                shootTimer = shootInterval; 
+            }
+        }
+    }
+    
+    void ShootPatternA()
+    {
+        if (bossBulletPrefab != null)
+        {
+            Instantiate(bossBulletPrefab, transform.position, Quaternion.identity);
+        } 
+    }
 }

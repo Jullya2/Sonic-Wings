@@ -1,49 +1,46 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class PlayerShoot : MonoBehaviour
 {
+    // Variáveis configuráveis no Inspector
     public GameObject bulletPrefab;
-    public Transform firePoint;
-    public float fireRate = 0.18f;
-    float nextFire = 0f;
+    public float fireRate = 0.5f;
+    
+    // Variáveis de controle interno
+    private float nextFireTime;
 
-    public AudioSource audioSource;
-    public AudioClip tiroSom;
-    public AudioClip explosaoSom;
-
-    void Update()
+    void Start()
     {
-        bool fire = false;
-
-        if (Mouse.current != null)
+        // AVISO DE ERRO DE CONFIGURAÇÃO (se o prefab estiver faltando)
+        if (bulletPrefab == null)
         {
-            if (Mouse.current.leftButton.isPressed) fire = true;
-        }
-
-        if (Keyboard.current != null)
-        {
-            if (Keyboard.current.spaceKey.isPressed) fire = true;
-        }
-
-        if (Gamepad.current != null)
-        {
-            if (Gamepad.current.buttonSouth.isPressed) fire = true;
-        }
-
-        if (fire && Time.time >= nextFire)
-        {
-            if (bulletPrefab != null && firePoint != null)
-            {
-                audioSource.PlayOneShot(tiroSom);
-                Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
-                nextFire = Time.time + fireRate;
-            }
+            Debug.LogError("PlayerShoot: O Prefab da Bala (bulletPrefab) não está conectado!");
         }
     }
 
-    public void ExplodirAsteroide()
+    void Update()
     {
-        audioSource.PlayOneShot(explosaoSom);
+        // CORREÇÃO CRÍTICA: Detecta o clique do mouse ou a Barra de Espaço.
+        // O tiro só funcionará se as configurações de Input estiverem corretas (veja a seção 2).
+        if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space))
+        {
+            TryShoot();
+        }
+    }
+
+    void TryShoot()
+    {
+        // Verifica o tempo de recarga (fireRate)
+        if (Time.time > nextFireTime)
+        {
+            nextFireTime = Time.time + fireRate;
+            Shoot();
+        }
+    }
+
+    void Shoot()
+    {
+        // Instancia a bala na posição e rotação do jogador
+        Instantiate(bulletPrefab, transform.position, transform.rotation);
     }
 }
